@@ -1,3 +1,4 @@
+#include <iostream>
 #include <functional>
 #include <algorithm> // min/max
 #include "raylib.h"
@@ -6,10 +7,12 @@
 #include <vector>
 #include "entity.h"
 #include "protocol.h"
-
+#include "bitstream.h"
+#include <cstring>
 
 static std::vector<Entity> entities;
 static uint16_t my_entity = invalid_entity;
+std::map<uint16_t, size_t> scores = std::map<uint16_t, size_t>();
 
 void on_new_entity_packet(ENetPacket *packet)
 {
@@ -30,15 +33,34 @@ void on_set_controlled_entity(ENetPacket *packet)
 void on_snapshot(ENetPacket *packet)
 {
   uint16_t eid = invalid_entity;
-  float x = 0.f; float y = 0.f;
-  deserialize_snapshot(packet, eid, x, y);
+  float x = 0.f;
+  float y = 0.f;
+  size_t size = 0;
+  deserialize_snapshot(packet, eid, x, y, size);
   // TODO: Direct adressing, of course!
   for (Entity &e : entities)
     if (e.eid == eid)
     {
       e.x = x;
       e.y = y;
+      e.size = size;
     }
+}
+
+void on_scores(ENetPacket *packet)
+{
+  Bitstream pdata(packet->data + 1, packet->dataLength - 1);
+
+  size_t size = 0;
+  uint16_t eid = invalid_entity;
+  size_t score = 0;
+  pdata.read(size);
+  for (int i = 0; i < size; ++i)
+  {
+    pdata.read(eid);
+    pdata.read(score);
+    scores[eid] = score;
+  }
 }
 
 int main(int argc, const char **argv)
@@ -80,13 +102,13 @@ int main(int argc, const char **argv)
     SetWindowSize(width, height);
   }
 
-  Camera2D camera = { {0, 0}, {0, 0}, 0.f, 1.f };
-  camera.target = Vector2{ 0.f, 0.f };
-  camera.offset = Vector2{ width * 0.5f, height * 0.5f };
+  Camera2D camera = {{0, 0}, {0, 0}, 0.f, 1.f};
+  camera.target = Vector2{0.f, 0.f};
+  camera.offset = Vector2{width * 0.5f, height * 0.5f};
   camera.rotation = 0.f;
   camera.zoom = 1.f;
 
-  SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+  SetTargetFPS(60); // Set our game to run at 60 frames-per-second
 
   bool connected = false;
   while (!WindowShouldClose())
@@ -116,7 +138,11 @@ int main(int argc, const char **argv)
         case E_SERVER_TO_CLIENT_SNAPSHOT:
           on_snapshot(event.packet);
           break;
+        case E_SERVER_TO_CLIENT_SCORES:
+          on_scores(event.packet);
+          break;
         };
+        enet_packet_destroy(event.packet);
         break;
       default:
         break;
@@ -137,21 +163,25 @@ int main(int argc, const char **argv)
           e.y += ((up ? -dt : 0.f) + (down ? +dt : 0.f)) * 100.f;
 
           // Send
-          send_entity_state(serverPeer, my_entity, e.x, e.y);
+          send_entity_state(serverPeer, my_entity, e.x, e.y, e.size);
         }
     }
 
-
     BeginDrawing();
-      ClearBackground(GRAY);
-      BeginMode2D(camera);
-        for (const Entity &e : entities)
-        {
-          const Rectangle rect = {e.x, e.y, 10.f, 10.f};
-          DrawRectangleRec(rect, GetColor(e.color));
-        }
-
-      EndMode2D();
+    ClearBackground(GRAY);
+    BeginMode2D(camera);
+    for (const Entity &e : entities)
+    {
+      const Rectangle rect = {e.x, e.y, e.size, e.size};
+      DrawRectangleRec(rect, GetColor(e.color));
+    }
+    int i = 0;
+    for (const auto &[eid, score] : scores)
+    {
+      DrawText(("Player " + std::to_string(eid) + ": " + std::to_string(score)).c_str(), -380, -290 + i * 20, 20, WHITE);
+      ++i;
+    }
+    EndMode2D();
     EndDrawing();
   }
 

@@ -1,5 +1,6 @@
 #include <enet/enet.h>
 #include <iostream>
+#include <cstring>
 
 int main(int argc, const char **argv)
 {
@@ -46,4 +47,3 @@ int main(int argc, const char **argv)
   atexit(enet_deinitialize);
   return 0;
 }
-

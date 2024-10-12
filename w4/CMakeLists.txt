@@ -38,4 +38,3 @@ if(MSVC)
   target_link_libraries(w4 PUBLIC ws2_32.lib winmm.lib)
   target_link_libraries(w4_server PUBLIC ws2_32.lib winmm.lib)
 endif()
-

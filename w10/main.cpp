@@ -1,5 +1,6 @@
 // initial skeleton is a clone from https://github.com/jpcy/bgfx-minimal-example
 //
+#include <iostream>
 #include <functional>
 #include "raylib.h"
 #include <enet/enet.h>
@@ -8,7 +9,6 @@
 #include <vector>
 #include "entity.h"
 #include "protocol.h"
-
 
 static std::vector<Entity> entities;
 static uint16_t my_entity = invalid_entity;
@@ -32,7 +32,9 @@ void on_set_controlled_entity(ENetPacket *packet)
 void on_snapshot(ENetPacket *packet)
 {
   uint16_t eid = invalid_entity;
-  float x = 0.f; float y = 0.f; float ori = 0.f;
+  float x = 0.f;
+  float y = 0.f;
+  float ori = 0.f;
   deserialize_snapshot(packet, eid, x, y, ori);
   // TODO: Direct adressing, of course!
   for (Entity &e : entities)
@@ -89,14 +91,13 @@ int main(int argc, const char **argv)
     SetWindowSize(width, height);
   }
 
-  Camera2D camera = { {0, 0}, {0, 0}, 0.f, 1.f };
-  camera.target = Vector2{ 0.f, 0.f };
-  camera.offset = Vector2{ width * 0.5f, height * 0.5f };
+  Camera2D camera = {{0, 0}, {0, 0}, 0.f, 1.f};
+  camera.target = Vector2{0.f, 0.f};
+  camera.offset = Vector2{width * 0.5f, height * 0.5f};
   camera.rotation = 0.f;
   camera.zoom = 10.f;
 
-
-  SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+  SetTargetFPS(60); // Set our game to run at 60 frames-per-second
 
   bool connected = false;
   while (!WindowShouldClose())
@@ -153,17 +154,16 @@ int main(int argc, const char **argv)
     }
 
     BeginDrawing();
-      ClearBackground(GRAY);
-      BeginMode2D(camera);
-        DrawRectangleLines(-16, -8, 32, 16, GetColor(0xff00ffff));
-        for (const Entity &e : entities)
-        {
-          const Rectangle rect = {e.x, e.y, 3.f, 1.f};
-          DrawRectanglePro(rect, {0.f, 0.5f}, e.ori * 180.f / PI, GetColor(e.color));
-        }
+    ClearBackground(GRAY);
+    BeginMode2D(camera);
+    DrawRectangleLines(-16, -8, 32, 16, GetColor(0xff00ffff));
+    for (const Entity &e : entities)
+    {
+      const Rectangle rect = {e.x, e.y, 3.f, 1.f};
+      DrawRectanglePro(rect, {0.f, 0.5f}, e.ori * 180.f / PI, GetColor(e.color));
+    }
 
-
-      EndMode2D();
+    EndMode2D();
     EndDrawing();
   }
 

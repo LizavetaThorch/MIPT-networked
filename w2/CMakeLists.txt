@@ -36,5 +36,3 @@ if(MSVC)
   target_link_libraries(w2_client PUBLIC ws2_32.lib winmm.lib)
   target_link_libraries(w2_lobby PUBLIC ws2_32.lib winmm.lib)
 endif()
-
-

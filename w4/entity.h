@@ -11,5 +11,6 @@ struct Entity
   bool serverControlled = false;
   float targetX = 0.f;
   float targetY = 0.f;
-};
 
+  size_t size;
+};
