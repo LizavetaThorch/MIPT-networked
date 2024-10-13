@@ -15,10 +15,10 @@ static std::map<uint16_t, size_t> scoreMap;
 static uint16_t create_random_entity()
 {
   uint16_t newEid = entities.size();
-  uint32_t color = 0xffff00ff +
+  uint32_t color = 0x80ff00ff +
                    0x00440000 * (1 + rand() % 4) +
                    0x00004400 * (1 + rand() % 4) +
-                   0xffff0080 * (1 + rand() % 4);
+                   0x8000ffff * (1 + rand() % 4);
   float x = (rand() % 40 - 20) * 5.f;
   float y = (rand() % 40 - 20) * 5.f;
   Entity ent = {color, x, y, newEid, false, 0.f, 0.f, 10 + rand() % 20};
