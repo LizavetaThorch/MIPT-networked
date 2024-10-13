@@ -8,7 +8,7 @@
 #include <map>
 
 static std::vector<Entity> entities;
-static std::map<uint16_t, ENetPeer*> controlledMap;
+static std::map<uint16_t, ENetPeer *> controlledMap;
 
 void on_join(ENetPacket *packet, ENetPeer *peer, ENetHost *host)
 {
@@ -24,7 +24,7 @@ void on_join(ENetPacket *packet, ENetPeer *peer, ENetHost *host)
   uint32_t color = 0xff000000 +
                    0x00440000 * (rand() % 5) +
                    0x00004400 * (rand() % 5) +
-                   0x00000044 * (rand() % 5);
+                   0x44800080 * (rand() % 5);
   float x = (rand() % 4) * 5.f;
   float y = (rand() % 4) * 5.f;
   Entity ent = {color, x, y, 0.f, (rand() / RAND_MAX) * 3.141592654f, 0.f, 0.f, newEid};
@@ -32,9 +32,8 @@ void on_join(ENetPacket *packet, ENetPeer *peer, ENetHost *host)
 
   controlledMap[newEid] = peer;
 
-
   // send info about new entity to everyone
-  for (size_t i = 0; i < host->peerCount; ++i)
+  for (size_t i = 0; i < host->connectedPeers; ++i)
     send_new_entity(&host->peers[i], ent);
   // send info about controlled entity
   send_set_controlled_entity(peer, newEid);
@@ -43,7 +42,8 @@ void on_join(ENetPacket *packet, ENetPeer *peer, ENetHost *host)
 void on_input(ENetPacket *packet)
 {
   uint16_t eid = invalid_entity;
-  float thr = 0.f; float steer = 0.f;
+  float thr = 0.f;
+  float steer = 0.f;
   deserialize_entity_input(packet, eid, thr, steer);
   for (Entity &e : entities)
     if (e.eid == eid)
@@ -90,12 +90,12 @@ int main(int argc, const char **argv)
       case ENET_EVENT_TYPE_RECEIVE:
         switch (get_packet_type(event.packet))
         {
-          case E_CLIENT_TO_SERVER_JOIN:
-            on_join(event.packet, event.peer, server);
-            break;
-          case E_CLIENT_TO_SERVER_INPUT:
-            on_input(event.packet);
-            break;
+        case E_CLIENT_TO_SERVER_JOIN:
+          on_join(event.packet, event.peer, server);
+          break;
+        case E_CLIENT_TO_SERVER_INPUT:
+          on_input(event.packet);
+          break;
         };
         enet_packet_destroy(event.packet);
         break;
@@ -109,15 +109,15 @@ int main(int argc, const char **argv)
       // simulate
       simulate_entity(e, dt);
       // send
-      for (size_t i = 0; i < server->peerCount; ++i)
+      for (size_t i = 0; i < server->connectedPeers; ++i)
       {
         ENetPeer *peer = &server->peers[i];
         // skip this here in this implementation
-        //if (controlledMap[e.eid] != peer)
+        // if (controlledMap[e.eid] != peer)
         send_snapshot(peer, e.eid, e.x, e.y, e.ori);
       }
     }
-    usleep(10000);
+    // usleep(700);
   }
 
   enet_host_destroy(server);
@@ -125,5 +125,3 @@ int main(int argc, const char **argv)
   atexit(enet_deinitialize);
   return 0;
 }
-
-
