@@ -91,7 +91,7 @@ int main(int argc, const char **argv)
 
   int width = 800;
   int height = 600;
-  InitWindow(width, height, "w4 networked MIPT");
+  InitWindow(width, height, "W2 networked MIPT");
 
   const int scrWidth = GetMonitorWidth(0);
   const int scrHeight = GetMonitorHeight(0);
